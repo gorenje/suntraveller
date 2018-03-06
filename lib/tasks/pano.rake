@@ -72,36 +72,21 @@ __END__
         background-color: black;
         color: white;
       }
-      #pano {
-        float: top;
-        height: 80%;
-        width: 100%;
-      }
       #map {
         float: bottom;
-        height: 10%;
+        height: 100%;
         width: 100%;
       }
       #buttoncontainer {
-        float: top;
-        height: 8%;
+        z-index: 5;
+        position: fixed;
+        top: 10px;
         width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
       }
-      #nextsunbutton{
-        cursor:pointer;
-        padding:5px 25px;
-        background:#35b128;
-        border:1px solid #33842a;
-        -moz-border-radius: 10px;
-        -webkit-border-radius: 10px;
-        border-radius: 10px;
-        color:#f3f3f3;
-        font-size:1.1em;
-      }
-      #nextsunbutton:hover, #nextsunbutton:focus{
+      .button:hover, .button:focus{
         background-color :#399630;
       }
       #waitingForGedot {
@@ -112,16 +97,35 @@ __END__
         z-index: 10000;
         display: none;
       }
-      #forkongithub a{display:none;background:#000;color:#fff;text-decoration:none;font-family:arial,sans-serif;text-align:center;font-weight:bold;padding:5px 40px;font-size:1rem;line-height:2rem;position:relative;transition:0.5s;}#forkongithub a:hover{background:#c11;color:#fff;}#forkongithub a::before,#forkongithub a::after{content:"";width:100%;display:block;position:absolute;top:1px;left:0;height:1px;background:#fff;}#forkongithub a::after{bottom:1px;top:auto;}@media screen and (min-width:800px){#forkongithub{position:absolute;display:block;top:0;left:0;width:200px;overflow:hidden;height:200px;z-index:9999;}#forkongithub a{display:block;width:200px;position:absolute;top:60px;left:-60px;transform:rotate(-45deg);-webkit-transform:rotate(-45deg);-ms-transform:rotate(-45deg);-moz-transform:rotate(-45deg);-o-transform:rotate(-45deg);box-shadow:4px 4px 10px rgba(0,0,0,0.8);}}
+      #floating-panel {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        position: fixed;
+        bottom: 13px;
+        z-index: 5;
+      }
+      .button {
+        padding:5px 25px;
+        cursor:pointer;
+        background:#35b128;
+        border:1px solid #33842a;
+        -moz-border-radius: 10px;
+        -webkit-border-radius: 10px;
+        border-radius: 10px;
+        color:#f3f3f3;
+        font-size:1.1em;
+      }
 
   %body
     #waitingForGedot
-    %span#forkongithub
-      %a{:href => "https://github.com/gorenje/suntraveller"}
-        Fork me on GitHub
     #buttoncontainer
-      %button#nextsunbutton{ :onclick => "nextLocation();" }
+      %button#nextsunbutton.button{ :onclick => "nextLocation();" }
         Sun Traveller - Next Sun
+    #floating-panel
+      %button#togbut.button{ :onclick => "toggleStreetView();" } Map/Photo
     #map
     #pano
     #pano2
@@ -140,9 +144,20 @@ __END__
                    $('#waitingForGedot').fadeOut(500);
                  },500)
                  lastobjid = data.objid;
+                 panorama.setVisible(true);
+                 $('#togbut').html( "Show Map" );
                }).fail(function(){
                  $('#waitingForGedot').fadeOut(500);
                })
+      }
+
+      function toggleStreetView() {
+        panorama.setVisible(!panorama.getVisible());
+        if ( panorama.getVisible() ) {
+          $('#togbut').html( "ShowMap" );
+        } else {
+          $('#togbut').html( "Show Photo" );
+        }
       }
 
       function initialize() {
@@ -154,29 +169,36 @@ __END__
           position: start,
           mode: 'webgl',
           clickToGo: true,
+          addressControl: true,
           addressControlOptions: {
               position: google.maps.ControlPosition.TOP_LEFT
           },
           linksControl: true,
           panControl:false,
           enableCloseButton: false,
+          zoomControl: true,
           zoomControlOptions:{
               position:google.maps.ControlPosition.RIGHT_TOP
           },
           pov: {
             heading: 0,
             pitch: 10
-          }
+          },
+          showRoadLabels: false,
+          motionTracking: false,
+          motionTrackingControl: true,
+          motionTrackingControlOptions:{
+              position:google.maps.ControlPosition.RIGHT_TOP
+          },
+
         };
 
         map = new google.maps.Map(document.getElementById('map'), {
           center: start,
-          zoom: 14
+          zoom: 14,
         });
-        panorama = new google.maps.StreetViewPanorama(
-                          document.getElementById('pano'), panoramaOptions);
-        map.setStreetView(panorama);
-
+        panorama = map.getStreetView();
+        panorama.setOptions(panoramaOptions);
         panorama2 = new google.maps.StreetViewPanorama(
                           document.getElementById('pano2'), panoramaOptions);
 
@@ -187,7 +209,8 @@ __END__
              panorama.setPano( panorama2.getPano() );
            }
         });
-
+        panorama.setVisible(true);
+        $('#togbut').html( "Show Map" );
         nextLocation()
       }
     - if ENV['GOOGLE_API_KEY']
