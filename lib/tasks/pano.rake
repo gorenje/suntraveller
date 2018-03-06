@@ -97,16 +97,6 @@ __END__
         z-index: 10000;
         display: none;
       }
-      #floating-panel {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        position: fixed;
-        bottom: 13px;
-        z-index: 5;
-      }
       .button {
         padding:5px 25px;
         cursor:pointer;
@@ -124,8 +114,6 @@ __END__
     #buttoncontainer
       %button#nextsunbutton.button{ :onclick => "nextLocation();" }
         Sun Traveller - Next Sun
-    #floating-panel
-      %button#togbut.button{ :onclick => "toggleStreetView();" } Map/Photo
     #map
     #pano
     #pano2
@@ -145,19 +133,9 @@ __END__
                  },500)
                  lastobjid = data.objid;
                  panorama.setVisible(true);
-                 $('#togbut').html( "Show Map" );
                }).fail(function(){
                  $('#waitingForGedot').fadeOut(500);
                })
-      }
-
-      function toggleStreetView() {
-        panorama.setVisible(!panorama.getVisible());
-        if ( panorama.getVisible() ) {
-          $('#togbut').html( "ShowMap" );
-        } else {
-          $('#togbut').html( "Show Photo" );
-        }
       }
 
       function initialize() {
@@ -210,7 +188,6 @@ __END__
            }
         });
         panorama.setVisible(true);
-        $('#togbut').html( "Show Map" );
         nextLocation()
       }
     - if ENV['GOOGLE_API_KEY']
