@@ -20,6 +20,11 @@ class PanoApp < Sinatra::Base
     Math.log(156543.03392 * Math.cos(lat * Math::PI / 180) / y, 2)
   end
 
+  get '/images/loader.svg' do
+    content_type "image/svg+xml"
+    haml :loader, :layout => false
+  end
+
   get '/image' do
     content_type :json
     body = RestClient.get("https://gist.githubusercontent.com"+
@@ -77,10 +82,46 @@ __END__
         height: 10%;
         width: 100%;
       }
+      #buttoncontainer {
+        float: top;
+        height: 8%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #nextsunbutton{
+        cursor:pointer;
+        padding:5px 25px;
+        background:#35b128;
+        border:1px solid #33842a;
+        -moz-border-radius: 10px;
+        -webkit-border-radius: 10px;
+        border-radius: 10px;
+        color:#f3f3f3;
+        font-size:1.1em;
+      }
+      #nextsunbutton:hover, #nextsunbutton:focus{
+        background-color :#399630;
+      }
+      #waitingForGedot {
+        background: url("/images/loader.svg") no-repeat scroll center center rgba(255,255,255,0.7);
+        position: fixed;
+        height: 100vh;
+        width: 100vw;
+        z-index: 10000;
+        display: none;
+      }
+      #forkongithub a{display:none;background:#000;color:#fff;text-decoration:none;font-family:arial,sans-serif;text-align:center;font-weight:bold;padding:5px 40px;font-size:1rem;line-height:2rem;position:relative;transition:0.5s;}#forkongithub a:hover{background:#c11;color:#fff;}#forkongithub a::before,#forkongithub a::after{content:"";width:100%;display:block;position:absolute;top:1px;left:0;height:1px;background:#fff;}#forkongithub a::after{bottom:1px;top:auto;}@media screen and (min-width:800px){#forkongithub{position:absolute;display:block;top:0;left:0;width:200px;overflow:hidden;height:200px;z-index:9999;}#forkongithub a{display:block;width:200px;position:absolute;top:60px;left:-60px;transform:rotate(-45deg);-webkit-transform:rotate(-45deg);-ms-transform:rotate(-45deg);-moz-transform:rotate(-45deg);-o-transform:rotate(-45deg);box-shadow:4px 4px 10px rgba(0,0,0,0.8);}}
+
   %body
-    %center
-      %h3 Sun Traveller
-      %button{ :onclick => "nextLocation();" } Next Sun
+    #waitingForGedot
+    %span#forkongithub
+      %a{:href => "https://github.com/gorenje/suntraveller"}
+        Fork me on GitHub
+    #buttoncontainer
+      %button#nextsunbutton{ :onclick => "nextLocation();" }
+        Sun Traveller - Next Sun
     #map
     #pano
     #pano2
@@ -89,12 +130,18 @@ __END__
       var panorama, map, panoramaOptions, panorama2, lastobjid = null;
 
       function nextLocation() {
+        $('#waitingForGedot').fadeIn(500);
         $.get( "/image?l="+lastobjid, function(data) {
                  map.setCenter( data.location )
                  panorama2.setPano(data.id)
                  panorama.setPov(data.pov)
                  panorama.setZoom(data.zoom)
+                 setTimeout(function(){
+                   $('#waitingForGedot').fadeOut(500);
+                 },500)
                  lastobjid = data.objid;
+               }).fail(function(){
+                 $('#waitingForGedot').fadeOut(500);
                })
       }
 
@@ -104,22 +151,22 @@ __END__
         var start = {lat: 36.058946, lng: -86.789344};
 
         panoramaOptions = {
-            position: start,
-            mode: 'webgl',
-            clickToGo: true,
-            addressControlOptions: {
-                position: google.maps.ControlPosition.TOP_LEFT
-            },
-            linksControl: true,
-            panControl:false,
-            enableCloseButton: false,
-            zoomControlOptions:{
-                position:google.maps.ControlPosition.RIGHT_TOP
-            },
-            pov: {
-              heading: 0,
-              pitch: 10
-            }
+          position: start,
+          mode: 'webgl',
+          clickToGo: true,
+          addressControlOptions: {
+              position: google.maps.ControlPosition.TOP_LEFT
+          },
+          linksControl: true,
+          panControl:false,
+          enableCloseButton: false,
+          zoomControlOptions:{
+              position:google.maps.ControlPosition.RIGHT_TOP
+          },
+          pov: {
+            heading: 0,
+            pitch: 10
+          }
         };
 
         map = new google.maps.Map(document.getElementById('map'), {
@@ -143,5 +190,24 @@ __END__
 
         nextLocation()
       }
-    %script{:async => "", :defer => "defer", :src => "https://maps.googleapis.com/maps/api/js?key=#{ENV['GOOGLE_API_KEY']}&callback=initialize"}
+    - if ENV['GOOGLE_API_KEY']
+      %script{:async => "", :defer => "defer", :src => "https://maps.googleapis.com/maps/api/js?key=#{ENV['GOOGLE_API_KEY']}&callback=initialize"}
+        :cdata
+    - else
+      %script{:async => "", :defer => "defer", :src => "https://maps.googleapis.com/maps/api/js?signed_in=true&callback=initialize"}
+        :cdata
+
+@@ loader
+!!! XML
+%svg#loader-1{"enable-background" => "new 0 0 40 40", :height => "40px", :space => "preserve", :version => "1.1", :viewbox => "0 0 40 40", :width => "40px", :x => "0px", :xmlns => "http://www.w3.org/2000/svg", "xmlns:xlink" => "http://www.w3.org/1999/xlink", :y => "0px"}
+  :css
+    .loader {
+      fill: #044057;
+    }
+    .loader__circle {
+      opacity: .2;
+    }
+  %path.loader.loader__circle{:d => "M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946 s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634 c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z"}
+  %path.loader.loader__inner{:d => "M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0 C22.32,8.481,24.301,9.057,26.013,10.047z"}
+    %animateTransform{:attributeType => "xml", :attributeName => "transform", :type => "rotate",  :from => "0 20 20",  :to => "360 20 20", :dur => "0.5s", :repeatCount => "indefinite"}
       :cdata
