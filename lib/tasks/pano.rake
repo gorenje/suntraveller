@@ -124,18 +124,17 @@ __END__
       function nextLocation() {
         $('#waitingForGedot').fadeIn(500);
         $.get( "/image?l="+lastobjid, function(data) {
-                 map.setCenter( data.location )
-                 panorama2.setPano(data.id)
-                 panorama.setPov(data.pov)
-                 panorama.setZoom(data.zoom)
-                 setTimeout(function(){
-                   $('#waitingForGedot').fadeOut(500);
-                 },500)
-                 lastobjid = data.objid;
-                 panorama.setVisible(true);
-               }).fail(function(){
-                 $('#waitingForGedot').fadeOut(500);
-               })
+          map.setCenter( data.location )
+          panorama2.setPano(data.id)
+          panorama.setPov(data.pov)
+          panorama.setZoom(data.zoom)
+          setTimeout(function(){
+            $('#waitingForGedot').fadeOut(500);
+          },500)
+          lastobjid = data.objid;
+        }).fail(function(){
+          $('#waitingForGedot').fadeOut(500);
+        })
       }
 
       function initialize() {
@@ -183,9 +182,9 @@ __END__
         // Why this is done, read this:
         //    https://issuetracker.google.com/issues/35825559#comment216
         google.maps.event.addListener(panorama2, "pano_changed", function() {
-           if ( !(panorama2.getPano().match(/F:/)) ) {
-             panorama.setPano( panorama2.getPano() );
-           }
+          if ( !(panorama2.getPano().match(/F:/)) ) {
+            panorama.setPano( panorama2.getPano() );
+          }
         });
         panorama.setVisible(true);
         nextLocation()
