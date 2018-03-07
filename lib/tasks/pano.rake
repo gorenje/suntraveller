@@ -20,20 +20,13 @@ class PanoApp < Sinatra::Base
     Math.log(156543.03392 * Math.cos(lat * Math::PI / 180) / y, 2)
   end
 
-  get '/images/loader.svg' do
-    content_type "image/svg+xml"
-    haml :loader, :layout => false
-  end
-
-  get '/image' do
-    content_type :json
-    body = RestClient.get("https://gist.githubusercontent.com"+
-                          "/gorenje/038a6a617f6501921bcc8be9d2046386/raw").body
-    objid,link = YAML.load(body)[:data].reject {|a| a.first == params[:l]}.sample
-
+  def parse_link(link,objid)
     link =~ /@([-?[:digit:]\.]+),([-?[:digit:]\.]+).+,([-?[:digit:]\.]+)y.*,([-?[:digit:]\.]+)h.*,([-?[:digit:]\.]+)t.+\!1s(.+)\!2e/
 
+    # This comes from:
+    #  https://stackoverflow.com/questions/32523173/google-maps-embed-api-panorama-id
     panoid = $6.length == 22 ? $6 : "F:#{CGI.escape($6)}"
+
     { :link  => link,
       :id    => panoid,
       :objid => objid,
@@ -46,10 +39,35 @@ class PanoApp < Sinatra::Base
         :pitch   => $5.to_f - 90
       },
       :zoom => y_to_zoom($3.to_f, $1.to_f).to_i
-    }.to_json
+    }
+  end
+
+  def datapoints
+    body = RestClient.get("https://gist.githubusercontent.com"+
+                          "/gorenje/038a6a617f6501921bcc8be9d2046386/raw").body
+    YAML.load(body)[:data]
+  end
+
+  def sample_from_datapoints
+    datapoints.reject { |a| a.first == params[:l] }.sample
+  end
+
+  get '/images/loader.svg' do
+    content_type "image/svg+xml"
+    haml :loader, :layout => false
+  end
+
+  get '/image' do
+    content_type :json
+    objid,link = sample_from_datapoints
+    parse_link(link,objid).to_json
   end
 
   get '/' do
+    @start = datapoints.
+               map { |(objid,link)| parse_link(link,objid) }.
+               select { |hsh| hsh[:id].length == 22 }.
+               sample
     haml :suntraveller, :layout => false
   end
 end
@@ -77,17 +95,24 @@ __END__
         height: 100%;
         width: 100%;
       }
+      #pano {
+        display: none;
+      }
       #buttoncontainer {
         z-index: 5;
         position: fixed;
-        top: 10px;
+        top: 30px;
         width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
+        pointer-events: none;
       }
       .button:hover, .button:focus{
-        background-color :#399630;
+        background-color: rgba(57,150,48,0.50);
+      }
+      #nextsunbutton {
+        pointer-events:auto;
       }
       #waitingForGedot {
         background: url("/images/loader.svg") no-repeat scroll center center rgba(255,255,255,0.7);
@@ -98,10 +123,10 @@ __END__
         display: none;
       }
       .button {
-        padding:5px 25px;
+        padding:40px 25px;
         cursor:pointer;
-        background:#35b128;
-        border:1px solid #33842a;
+        background:rgba(53,177,40,0.5);
+        border:1px solid rgba(51,132,42,0.50);
         -moz-border-radius: 10px;
         -webkit-border-radius: 10px;
         border-radius: 10px;
@@ -116,7 +141,6 @@ __END__
         Sun Traveller - Next Sun
     #map
     #pano
-    #pano2
 
     :javascript
       var panorama, map, panoramaOptions, panorama2, lastobjid = null;
@@ -140,7 +164,7 @@ __END__
       function initialize() {
         google.maps.streetViewViewer = 'photosphere';
 
-        var start = {lat: 36.058946, lng: -86.789344};
+        var start = #{@start[:location].to_json};
 
         panoramaOptions = {
           position: start,
@@ -157,10 +181,9 @@ __END__
           zoomControlOptions:{
               position:google.maps.ControlPosition.RIGHT_TOP
           },
-          pov: {
-            heading: 0,
-            pitch: 10
-          },
+          pov: #{@start[:pov].to_json},
+          zoom: #{@start[:zoom]},
+          pano: "#{@start[:id]}",
           showRoadLabels: false,
           motionTracking: false,
           motionTrackingControl: true,
@@ -170,24 +193,26 @@ __END__
 
         };
 
+        // This setup, taken from:
+        //   https://developers.google.com/maps/documentation/javascript/examples/streetview-overlays
         map = new google.maps.Map(document.getElementById('map'), {
           center: start,
           zoom: 14,
+          streetViewControl: false
         });
         panorama = map.getStreetView();
         panorama.setOptions(panoramaOptions);
-        panorama2 = new google.maps.StreetViewPanorama(
-                          document.getElementById('pano2'), panoramaOptions);
+        panorama.setVisible(true);
 
         // Why this is done, read this:
         //    https://issuetracker.google.com/issues/35825559#comment216
+        panorama2 = new google.maps.StreetViewPanorama(
+                          document.getElementById('pano'), panoramaOptions);
         google.maps.event.addListener(panorama2, "pano_changed", function() {
           if ( !(panorama2.getPano().match(/F:/)) ) {
             panorama.setPano( panorama2.getPano() );
           }
         });
-        panorama.setVisible(true);
-        nextLocation()
       }
     - if ENV['GOOGLE_API_KEY']
       %script{:async => "", :defer => "defer", :src => "https://maps.googleapis.com/maps/api/js?key=#{ENV['GOOGLE_API_KEY']}&callback=initialize"}
