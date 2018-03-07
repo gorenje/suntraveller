@@ -91,9 +91,8 @@ __END__
         color: white;
       }
       #map {
-        float: bottom;
-        height: 100%;
         width: 100%;
+        height: 100%;
       }
       #pano {
         display: none;
@@ -170,27 +169,32 @@ __END__
           position: start,
           mode: 'webgl',
           clickToGo: true,
-          addressControl: true,
-          addressControlOptions: {
-              position: google.maps.ControlPosition.TOP_LEFT
-          },
-          linksControl: true,
-          panControl:false,
-          enableCloseButton: false,
-          zoomControl: true,
-          zoomControlOptions:{
-              position:google.maps.ControlPosition.RIGHT_TOP
-          },
           pov: #{@start[:pov].to_json},
           zoom: #{@start[:zoom]},
           pano: "#{@start[:id]}",
+          linksControl: true,
+          rotateControl: true,
+          enableCloseButton: false,
           showRoadLabels: false,
+          disableDefaultUI: false,
+          addressControl: true,
+          addressControlOptions: {
+              position: google.maps.ControlPosition.LEFT_BOTTOM
+          },
+          panControl: true,
+          panControlOptions: {
+              position: google.maps.ControlPosition.RIGHT_BOTTOM
+          },
+          zoomControl: true,
+          zoomControlOptions:{
+              position:google.maps.ControlPosition.RIGHT_BOTTOM
+          },
           motionTracking: false,
           motionTrackingControl: true,
           motionTrackingControlOptions:{
-              position:google.maps.ControlPosition.RIGHT_TOP
+              position:google.maps.ControlPosition.TOP_RIGHT
           },
-
+          fullscreenControl: false,
         };
 
         // This setup, taken from:
@@ -198,7 +202,7 @@ __END__
         map = new google.maps.Map(document.getElementById('map'), {
           center: start,
           zoom: 14,
-          streetViewControl: false
+          streetViewControl: false,
         });
         panorama = map.getStreetView();
         panorama.setOptions(panoramaOptions);
