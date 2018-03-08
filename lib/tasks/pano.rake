@@ -14,12 +14,6 @@ class PanoApp < Sinatra::Base
   enable :inline_templates
   set :show_exceptions, :after_handler
 
-  def y_to_zoom(y,lat)
-    # This comes from:
-    #    https://groups.google.com/forum/#!msg/google-maps-js-api-v3/hDRO4oHVSeM/osOYQYXg2oUJ
-    Math.log(156543.03392 * Math.cos(lat * Math::PI / 180) / y, 2)
-  end
-
   def parse_link(link,objid)
     link =~ /@([-?[:digit:]\.]+),([-?[:digit:]\.]+).+,([-?[:digit:]\.]+)y.*,([-?[:digit:]\.]+)h.*,([-?[:digit:]\.]+)t.+\!1s(.+)\!2e/
 
@@ -38,7 +32,7 @@ class PanoApp < Sinatra::Base
         :heading => $4.to_f,
         :pitch   => $5.to_f - 90
       },
-      :zoom => y_to_zoom($3.to_f, $1.to_f).to_i
+      :zoom => 0
     }
   end
 
