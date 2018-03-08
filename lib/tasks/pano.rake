@@ -31,8 +31,7 @@ class PanoApp < Sinatra::Base
       :pov => {
         :heading => $4.to_f,
         :pitch   => $5.to_f - 90
-      },
-      :zoom => 0
+      }
     }
   end
 
@@ -135,18 +134,15 @@ __END__
     #pano
 
     :javascript
-      var panorama, map, panoramaOptions, panorama2, lastobjid = null;
+      var panorama, map, panoramaOptions, panorama2, lastobjid = null, currpano;
 
       function nextLocation() {
         $('#waitingForGedot').fadeIn(500);
         $.get( "/image?l="+lastobjid, function(data) {
+          currpano = data;
           map.setCenter( data.location )
           panorama2.setPano(data.id)
-          panorama.setPov(data.pov)
-          panorama.setZoom(data.zoom)
-          setTimeout(function(){
-            $('#waitingForGedot').fadeOut(500);
-          },500)
+          panorama2.setPov(data.pov)
           lastobjid = data.objid;
         }).fail(function(){
           $('#waitingForGedot').fadeOut(500);
@@ -163,7 +159,7 @@ __END__
           mode: 'webgl',
           clickToGo: true,
           pov: #{@start[:pov].to_json},
-          zoom: #{@start[:zoom]},
+          zoom: 0,
           pano: "#{@start[:id]}",
           linksControl: true,
           rotateControl: true,
@@ -208,6 +204,9 @@ __END__
         google.maps.event.addListener(panorama2, "pano_changed", function() {
           if ( !(panorama2.getPano().match(/F:/)) ) {
             panorama.setPano( panorama2.getPano() );
+            panorama.setPov(panorama2.getPov())
+            panorama.setZoom(0)
+            $('#waitingForGedot').fadeOut(500);
           }
         });
       }
