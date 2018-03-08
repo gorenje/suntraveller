@@ -116,22 +116,21 @@ __END__
         display: none;
       }
       .button {
-        padding:40px 25px;
+        padding:0px 20px;
         cursor:pointer;
         background:rgba(53,177,40,0.5);
         border:1px solid rgba(51,132,42,0.50);
         -moz-border-radius: 10px;
         -webkit-border-radius: 10px;
         border-radius: 10px;
-        color:#f3f3f3;
-        font-size:1.1em;
+        color:rgba(255,255,255,0.5);
+        font-size:6em;
       }
 
   %body
     #waitingForGedot
     #buttoncontainer
-      %button#nextsunbutton.button{ :onclick => "nextLocation();" }
-        Sun Traveller - Next Sun
+      %button#nextsunbutton.button{ :onclick => "nextLocation();" } &#9728;
     #map
     #pano
 
