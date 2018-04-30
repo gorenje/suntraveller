@@ -1,0 +1,110 @@
+:javascript
+  var panorama, map, panoramaOptions, panorama2, lastobjid = null, currpano;
+  var updateTimer = null;
+
+  function nextLocation(callback) {
+    $('#waitingForGedot').fadeIn(500);
+    $.get( "/image?l="+lastobjid, function(data) {
+      currpano = data;
+      map.setCenter( data.location )
+      panorama2.setPano(data.id)
+      panorama2.setPov(data.pov)
+      lastobjid = data.objid;
+      if ( callback ) callback();
+    }).fail(function(){
+      $('#waitingForGedot').fadeOut(500);
+      if ( callback ) callback();
+    })
+  }
+
+  function startTravels() {
+    if ( updateTimer ) {
+      return;
+    }
+    nextSun()
+  }
+
+  function stopTravels() {
+    if ( updateTimer !== null ) {
+      clearTimeout( updateTimer );
+      updateTimer = null;
+    }
+  }
+
+  function nextSun() {
+    nextLocation(function() {
+      updateTimer = setTimeout(nextSun, 4000);
+    });
+  }
+
+  function forward() {
+    stopTravels();
+    nextLocation(null);
+  }
+
+  function backward() {
+    stopTravels();
+    nextLocation(null);
+  }
+
+  function initialize() {
+    google.maps.streetViewViewer = 'photosphere';
+
+    var start = #{@start[:location].to_json};
+
+    panoramaOptions = {
+      position: start,
+      mode: 'webgl',
+      clickToGo: true,
+      pov: #{@start[:pov].to_json},
+      zoom: 0,
+      pano: "#{@start[:id]}",
+      linksControl: true,
+      rotateControl: true,
+      enableCloseButton: false,
+      showRoadLabels: false,
+      disableDefaultUI: false,
+      addressControl: true,
+      addressControlOptions: {
+          position: google.maps.ControlPosition.LEFT_BOTTOM
+      },
+      panControl: true,
+      panControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM
+      },
+      zoomControl: true,
+      zoomControlOptions:{
+          position:google.maps.ControlPosition.RIGHT_BOTTOM
+      },
+      motionTracking: false,
+      motionTrackingControl: true,
+      motionTrackingControlOptions:{
+          position:google.maps.ControlPosition.TOP_RIGHT
+      },
+      fullscreenControl: false,
+    };
+
+    // This setup, taken from:
+    //   https://developers.google.com/maps/documentation/javascript/examples/streetview-overlays
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: start,
+      zoom: 14,
+      streetViewControl: false,
+    });
+    panorama = map.getStreetView();
+    panorama.setOptions(panoramaOptions);
+    panorama.setVisible(true);
+
+    // Why this is done, read this:
+    //    https://issuetracker.google.com/issues/35825559#comment216
+    panorama2 = new google.maps.StreetViewPanorama(
+                      document.getElementById('pano'), panoramaOptions);
+    google.maps.event.addListener(panorama2, "pano_changed", function() {
+      if ( !(panorama2.getPano().match(/F:/)) ) {
+        panorama.setPano( panorama2.getPano() );
+        panorama.setPov(panorama2.getPov())
+        panorama.setZoom(0)
+        $('#waitingForGedot').fadeOut(500);
+      }
+    });
+  }

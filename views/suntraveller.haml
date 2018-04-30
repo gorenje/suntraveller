@@ -1,0 +1,25 @@
+!!!
+%html
+  %head
+    %link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css")
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"}
+    %meta{:charset => "utf-8"}/
+    %title Sun Traveller
+    = haml :_css
+    = haml :_javascript
+
+  %body
+    #waitingForGedot
+    #buttoncontainer
+      %button.button.fa.fa-backward{ :onclick => "backward();" }
+      %button.button.fa.fa-stop{ :onclick => "stopTravels();" }
+      %button.button.fa.fa-play{ :onclick => "startTravels();" }
+      %button.button.fa.fa-forward{ :onclick => "forward();" }
+    #map
+    #pano
+    - if ENV['GOOGLE_API_KEY']
+      %script{:async => "", :defer => "defer", :src => "https://maps.googleapis.com/maps/api/js?key=#{ENV['GOOGLE_API_KEY']}&callback=initialize"}
+        :cdata
+    - else
+      %script{:async => "", :defer => "defer", :src => "https://maps.googleapis.com/maps/api/js?signed_in=true&callback=initialize"}
+        :cdata
