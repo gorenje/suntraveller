@@ -1,26 +1,38 @@
 :javascript
-  var panorama, map, panoramaOptions, panorama2, lastobjid = null, currpano;
-  var updateTimer = null;
+  var panorama, map, panoramaOptions, panorama2;
+  var updateTimer = null, ptrIdx = 0, locations = [];
 
   function nextLocation(callback) {
     $('#waitingForGedot').fadeIn(500);
-    $.get( "/image?l="+lastobjid, function(data) {
-      currpano = data;
-      map.setCenter( data.location )
-      panorama2.setPano(data.id)
-      panorama2.setPov(data.pov)
-      lastobjid = data.objid;
-      if ( callback ) callback();
-    }).fail(function(){
-      $('#waitingForGedot').fadeOut(500);
-      if ( callback ) callback();
-    })
+
+    ptrIdx = ( ptrIdx + 1 ) % locations.length;
+
+    var data = locations[ptrIdx];
+    map.setCenter( data.location )
+    panorama2.setPano(data.id)
+    panorama2.setPov(data.pov)
+    panorama2.setZoom(0)
+
+    if ( callback ) callback();
+  }
+
+  function initializeLocations() {
+    $.get( "/locations.json", function(data){
+       locations = data.data;
+       ptrIdx = Math.floor(Math.random() * locations.length);
+       $('.button').show()
+     }).fail(function() {
+       setTimeout(initializeLocations, 3000);
+     });
   }
 
   function startTravels() {
     if ( updateTimer ) {
       return;
     }
+    ptrIdx = Math.floor(Math.random() * locations.length);
+    $('#playbutton').hide();
+    $('#stopbutton').show();
     nextSun()
   }
 
@@ -28,12 +40,14 @@
     if ( updateTimer !== null ) {
       clearTimeout( updateTimer );
       updateTimer = null;
+      $('#playbutton').show();
+      $('#stopbutton').hide();
     }
   }
 
   function nextSun() {
     nextLocation(function() {
-      updateTimer = setTimeout(nextSun, 4000);
+      updateTimer = setTimeout(nextSun, 5000);
     });
   }
 
@@ -44,21 +58,27 @@
 
   function backward() {
     stopTravels();
+    ptrIdx = ptrIdx - 1;
+    if ( ptrIdx < 0 ) { ptrIdx = locations.length-1; }
+    ptrIdx = ptrIdx - 1;
+    if ( ptrIdx < 0 ) { ptrIdx = locations.length-1; }
     nextLocation(null);
   }
 
   function initialize() {
+    $('.button').hide()
     google.maps.streetViewViewer = 'photosphere';
+    initializeLocations();
 
-    var start = #{@start[:location].to_json};
+    var start = #{@start['location'].to_json};
 
     panoramaOptions = {
       position: start,
       mode: 'webgl',
       clickToGo: true,
-      pov: #{@start[:pov].to_json},
+      pov: #{@start['pov'].to_json},
       zoom: 0,
-      pano: "#{@start[:id]}",
+      pano: "#{@start['id']}",
       linksControl: true,
       rotateControl: true,
       enableCloseButton: false,

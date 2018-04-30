@@ -19,5 +19,5 @@ Currently available [here](http://suntraveller.herokuapp.com/).
 # Background
 
 The various Google Photospheres are provided by this
-[gist](https://gist.github.com/gorenje/038a6a617f6501921bcc8be9d2046386)
+[gist](https://gist.github.com/gorenje/4086f765cde6236f06c4fde0a67e2dd3)
 and is updated perpetually.

@@ -12,8 +12,8 @@
     #waitingForGedot
     #buttoncontainer
       %button.button.fa.fa-backward{ :onclick => "backward();" }
-      %button.button.fa.fa-stop{ :onclick => "stopTravels();" }
-      %button.button.fa.fa-play{ :onclick => "startTravels();" }
+      %button#stopbutton.button.fa.fa-stop{ :onclick => "stopTravels();" }
+      %button#playbutton.button.fa.fa-play{ :onclick => "startTravels();" }
       %button.button.fa.fa-forward{ :onclick => "forward();" }
     #map
     #pano
