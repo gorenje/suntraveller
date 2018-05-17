@@ -1,0 +1,32 @@
+!!!
+- IMG_SIZE = params[:size] || 20
+
+%html
+  %head
+    %link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css")
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"}
+    %meta{:charset => "utf-8"}/
+    %title Pixel Art
+    :css
+      img {
+        border:1px solid #021a40;
+        padding:1px;
+      }
+
+  %body
+    %table
+      %thead
+        %tr
+          %th Description
+          %th Image
+      %tbody
+        - @content.each do |(name,clrs)|
+          %tr
+            %td= name
+            %td
+              %img{ :src => "/images/pixel.svg?c=#{clrs}", :height => IMG_SIZE }
+
+    %p
+    Random
+    %img{ :src => "/images/pixel.svg?c=#{@random}", :height => IMG_SIZE }
+    %b= @random
